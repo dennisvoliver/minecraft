@@ -1,0 +1,43 @@
+package net.minecraft.util.math;
+
+import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.server.world.ServerWorld;
+
+public class BlockPointerImpl implements BlockPointer {
+   private final ServerWorld world;
+   private final BlockPos pos;
+
+   public BlockPointerImpl(ServerWorld serverWorld, BlockPos pos) {
+      this.world = serverWorld;
+      this.pos = pos;
+   }
+
+   public ServerWorld getWorld() {
+      return this.world;
+   }
+
+   public double getX() {
+      return (double)this.pos.getX() + 0.5D;
+   }
+
+   public double getY() {
+      return (double)this.pos.getY() + 0.5D;
+   }
+
+   public double getZ() {
+      return (double)this.pos.getZ() + 0.5D;
+   }
+
+   public BlockPos getBlockPos() {
+      return this.pos;
+   }
+
+   public BlockState getBlockState() {
+      return this.world.getBlockState(this.pos);
+   }
+
+   public <T extends BlockEntity> T getBlockEntity() {
+      return this.world.getBlockEntity(this.pos);
+   }
+}

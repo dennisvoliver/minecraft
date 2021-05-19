@@ -1,0 +1,116 @@
+package net.minecraft.data.server.recipe;
+
+import com.google.gson.JsonObject;
+import java.util.function.Consumer;
+import net.minecraft.advancement.Advancement;
+import net.minecraft.advancement.AdvancementRewards;
+import net.minecraft.advancement.CriterionMerger;
+import net.minecraft.advancement.criterion.CriterionConditions;
+import net.minecraft.advancement.criterion.RecipeUnlockedCriterion;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemConvertible;
+import net.minecraft.recipe.Ingredient;
+import net.minecraft.recipe.RecipeSerializer;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+import org.jetbrains.annotations.Nullable;
+
+public class SingleItemRecipeJsonFactory {
+   private final Item output;
+   private final Ingredient input;
+   private final int count;
+   private final Advancement.Task builder = Advancement.Task.create();
+   private String group;
+   private final RecipeSerializer<?> serializer;
+
+   public SingleItemRecipeJsonFactory(RecipeSerializer<?> serializer, Ingredient input, ItemConvertible output, int outputCount) {
+      this.serializer = serializer;
+      this.output = output.asItem();
+      this.input = input;
+      this.count = outputCount;
+   }
+
+   public static SingleItemRecipeJsonFactory create(Ingredient input, ItemConvertible output) {
+      return new SingleItemRecipeJsonFactory(RecipeSerializer.STONECUTTING, input, output, 1);
+   }
+
+   public static SingleItemRecipeJsonFactory create(Ingredient input, ItemConvertible output, int outputCount) {
+      return new SingleItemRecipeJsonFactory(RecipeSerializer.STONECUTTING, input, output, outputCount);
+   }
+
+   public SingleItemRecipeJsonFactory create(String criterionName, CriterionConditions conditions) {
+      this.builder.criterion(criterionName, conditions);
+      return this;
+   }
+
+   public void offerTo(Consumer<RecipeJsonProvider> exporter, String recipeIdStr) {
+      Identifier identifier = Registry.ITEM.getId(this.output);
+      if ((new Identifier(recipeIdStr)).equals(identifier)) {
+         throw new IllegalStateException("Single Item Recipe " + recipeIdStr + " should remove its 'save' argument");
+      } else {
+         this.offerTo(exporter, new Identifier(recipeIdStr));
+      }
+   }
+
+   public void offerTo(Consumer<RecipeJsonProvider> exporter, Identifier recipeId) {
+      this.validate(recipeId);
+      this.builder.parent(new Identifier("recipes/root")).criterion("has_the_recipe", (CriterionConditions)RecipeUnlockedCriterion.create(recipeId)).rewards(AdvancementRewards.Builder.recipe(recipeId)).criteriaMerger(CriterionMerger.OR);
+      exporter.accept(new SingleItemRecipeJsonFactory.SingleItemRecipeJsonProvider(recipeId, this.serializer, this.group == null ? "" : this.group, this.input, this.output, this.count, this.builder, new Identifier(recipeId.getNamespace(), "recipes/" + this.output.getGroup().getName() + "/" + recipeId.getPath())));
+   }
+
+   private void validate(Identifier recipeId) {
+      if (this.builder.getCriteria().isEmpty()) {
+         throw new IllegalStateException("No way of obtaining recipe " + recipeId);
+      }
+   }
+
+   public static class SingleItemRecipeJsonProvider implements RecipeJsonProvider {
+      private final Identifier recipeId;
+      private final String group;
+      private final Ingredient input;
+      private final Item output;
+      private final int count;
+      private final Advancement.Task builder;
+      private final Identifier advancementId;
+      private final RecipeSerializer<?> serializer;
+
+      public SingleItemRecipeJsonProvider(Identifier recipeId, RecipeSerializer<?> serializer, String group, Ingredient input, Item output, int outputCount, Advancement.Task builder, Identifier advancementId) {
+         this.recipeId = recipeId;
+         this.serializer = serializer;
+         this.group = group;
+         this.input = input;
+         this.output = output;
+         this.count = outputCount;
+         this.builder = builder;
+         this.advancementId = advancementId;
+      }
+
+      public void serialize(JsonObject json) {
+         if (!this.group.isEmpty()) {
+            json.addProperty("group", this.group);
+         }
+
+         json.add("ingredient", this.input.toJson());
+         json.addProperty("result", Registry.ITEM.getId(this.output).toString());
+         json.addProperty("count", (Number)this.count);
+      }
+
+      public Identifier getRecipeId() {
+         return this.recipeId;
+      }
+
+      public RecipeSerializer<?> getSerializer() {
+         return this.serializer;
+      }
+
+      @Nullable
+      public JsonObject toAdvancementJson() {
+         return this.builder.toJson();
+      }
+
+      @Nullable
+      public Identifier getAdvancementId() {
+         return this.advancementId;
+      }
+   }
+}

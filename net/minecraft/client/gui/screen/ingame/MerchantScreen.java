@@ -1,0 +1,319 @@
+package net.minecraft.client.gui.screen.ingame;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import java.util.Iterator;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.SelectMerchantTradeC2SPacket;
+import net.minecraft.screen.MerchantScreenHandler;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.StringVisitable;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.village.TradeOffer;
+import net.minecraft.village.TradeOfferList;
+import net.minecraft.village.VillagerData;
+
+@Environment(EnvType.CLIENT)
+public class MerchantScreen extends HandledScreen<MerchantScreenHandler> {
+   private static final Identifier TEXTURE = new Identifier("textures/gui/container/villager2.png");
+   private static final Text TRADES_TEXT = new TranslatableText("merchant.trades");
+   private static final Text SEPARATOR = new LiteralText(" - ");
+   private static final Text DEPRECATED_TEXT = new TranslatableText("merchant.deprecated");
+   private int selectedIndex;
+   private final MerchantScreen.WidgetButtonPage[] offers = new MerchantScreen.WidgetButtonPage[7];
+   private int indexStartOffset;
+   private boolean scrolling;
+
+   public MerchantScreen(MerchantScreenHandler handler, PlayerInventory inventory, Text title) {
+      super(handler, inventory, title);
+      this.backgroundWidth = 276;
+      this.playerInventoryTitleX = 107;
+   }
+
+   private void syncRecipeIndex() {
+      ((MerchantScreenHandler)this.handler).setRecipeIndex(this.selectedIndex);
+      ((MerchantScreenHandler)this.handler).switchTo(this.selectedIndex);
+      this.client.getNetworkHandler().sendPacket(new SelectMerchantTradeC2SPacket(this.selectedIndex));
+   }
+
+   protected void init() {
+      super.init();
+      int i = (this.width - this.backgroundWidth) / 2;
+      int j = (this.height - this.backgroundHeight) / 2;
+      int k = j + 16 + 2;
+
+      for(int l = 0; l < 7; ++l) {
+         this.offers[l] = (MerchantScreen.WidgetButtonPage)this.addButton(new MerchantScreen.WidgetButtonPage(i + 5, k, l, (button) -> {
+            if (button instanceof MerchantScreen.WidgetButtonPage) {
+               this.selectedIndex = ((MerchantScreen.WidgetButtonPage)button).getIndex() + this.indexStartOffset;
+               this.syncRecipeIndex();
+            }
+
+         }));
+         k += 20;
+      }
+
+   }
+
+   protected void drawForeground(MatrixStack matrices, int mouseX, int mouseY) {
+      int i = ((MerchantScreenHandler)this.handler).getLevelProgress();
+      if (i > 0 && i <= 5 && ((MerchantScreenHandler)this.handler).isLeveled()) {
+         Text text = this.title.shallowCopy().append(SEPARATOR).append((Text)(new TranslatableText("merchant.level." + i)));
+         int j = this.textRenderer.getWidth((StringVisitable)text);
+         int k = 49 + this.backgroundWidth / 2 - j / 2;
+         this.textRenderer.draw(matrices, (Text)text, (float)k, 6.0F, 4210752);
+      } else {
+         this.textRenderer.draw(matrices, this.title, (float)(49 + this.backgroundWidth / 2 - this.textRenderer.getWidth((StringVisitable)this.title) / 2), 6.0F, 4210752);
+      }
+
+      this.textRenderer.draw(matrices, this.playerInventory.getDisplayName(), (float)this.playerInventoryTitleX, (float)this.playerInventoryTitleY, 4210752);
+      int l = this.textRenderer.getWidth((StringVisitable)TRADES_TEXT);
+      this.textRenderer.draw(matrices, TRADES_TEXT, (float)(5 - l / 2 + 48), 6.0F, 4210752);
+   }
+
+   protected void drawBackground(MatrixStack matrices, float delta, int mouseX, int mouseY) {
+      RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+      this.client.getTextureManager().bindTexture(TEXTURE);
+      int i = (this.width - this.backgroundWidth) / 2;
+      int j = (this.height - this.backgroundHeight) / 2;
+      drawTexture(matrices, i, j, this.getZOffset(), 0.0F, 0.0F, this.backgroundWidth, this.backgroundHeight, 256, 512);
+      TradeOfferList tradeOfferList = ((MerchantScreenHandler)this.handler).getRecipes();
+      if (!tradeOfferList.isEmpty()) {
+         int k = this.selectedIndex;
+         if (k < 0 || k >= tradeOfferList.size()) {
+            return;
+         }
+
+         TradeOffer tradeOffer = (TradeOffer)tradeOfferList.get(k);
+         if (tradeOffer.isDisabled()) {
+            this.client.getTextureManager().bindTexture(TEXTURE);
+            RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            drawTexture(matrices, this.x + 83 + 99, this.y + 35, this.getZOffset(), 311.0F, 0.0F, 28, 21, 256, 512);
+         }
+      }
+
+   }
+
+   private void drawLevelInfo(MatrixStack matrices, int x, int y, TradeOffer tradeOffer) {
+      this.client.getTextureManager().bindTexture(TEXTURE);
+      int i = ((MerchantScreenHandler)this.handler).getLevelProgress();
+      int j = ((MerchantScreenHandler)this.handler).getExperience();
+      if (i < 5) {
+         drawTexture(matrices, x + 136, y + 16, this.getZOffset(), 0.0F, 186.0F, 102, 5, 256, 512);
+         int k = VillagerData.getLowerLevelExperience(i);
+         if (j >= k && VillagerData.canLevelUp(i)) {
+            int l = true;
+            float f = 100.0F / (float)(VillagerData.getUpperLevelExperience(i) - k);
+            int m = Math.min(MathHelper.floor(f * (float)(j - k)), 100);
+            drawTexture(matrices, x + 136, y + 16, this.getZOffset(), 0.0F, 191.0F, m + 1, 5, 256, 512);
+            int n = ((MerchantScreenHandler)this.handler).getMerchantRewardedExperience();
+            if (n > 0) {
+               int o = Math.min(MathHelper.floor((float)n * f), 100 - m);
+               drawTexture(matrices, x + 136 + m + 1, y + 16 + 1, this.getZOffset(), 2.0F, 182.0F, o, 3, 256, 512);
+            }
+
+         }
+      }
+   }
+
+   private void renderScrollbar(MatrixStack matrices, int x, int y, TradeOfferList tradeOffers) {
+      int i = tradeOffers.size() + 1 - 7;
+      if (i > 1) {
+         int j = 139 - (27 + (i - 1) * 139 / i);
+         int k = 1 + j / i + 139 / i;
+         int l = true;
+         int m = Math.min(113, this.indexStartOffset * k);
+         if (this.indexStartOffset == i - 1) {
+            m = 113;
+         }
+
+         drawTexture(matrices, x + 94, y + 18 + m, this.getZOffset(), 0.0F, 199.0F, 6, 27, 256, 512);
+      } else {
+         drawTexture(matrices, x + 94, y + 18, this.getZOffset(), 6.0F, 199.0F, 6, 27, 256, 512);
+      }
+
+   }
+
+   public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+      this.renderBackground(matrices);
+      super.render(matrices, mouseX, mouseY, delta);
+      TradeOfferList tradeOfferList = ((MerchantScreenHandler)this.handler).getRecipes();
+      if (!tradeOfferList.isEmpty()) {
+         int i = (this.width - this.backgroundWidth) / 2;
+         int j = (this.height - this.backgroundHeight) / 2;
+         int k = j + 16 + 1;
+         int l = i + 5 + 5;
+         RenderSystem.pushMatrix();
+         RenderSystem.enableRescaleNormal();
+         this.client.getTextureManager().bindTexture(TEXTURE);
+         this.renderScrollbar(matrices, i, j, tradeOfferList);
+         int m = 0;
+         Iterator var11 = tradeOfferList.iterator();
+
+         while(true) {
+            TradeOffer tradeOffer;
+            while(var11.hasNext()) {
+               tradeOffer = (TradeOffer)var11.next();
+               if (this.canScroll(tradeOfferList.size()) && (m < this.indexStartOffset || m >= 7 + this.indexStartOffset)) {
+                  ++m;
+               } else {
+                  ItemStack itemStack = tradeOffer.getOriginalFirstBuyItem();
+                  ItemStack itemStack2 = tradeOffer.getAdjustedFirstBuyItem();
+                  ItemStack itemStack3 = tradeOffer.getSecondBuyItem();
+                  ItemStack itemStack4 = tradeOffer.getMutableSellItem();
+                  this.itemRenderer.zOffset = 100.0F;
+                  int n = k + 2;
+                  this.renderFirstBuyItem(matrices, itemStack2, itemStack, l, n);
+                  if (!itemStack3.isEmpty()) {
+                     this.itemRenderer.renderInGui(itemStack3, i + 5 + 35, n);
+                     this.itemRenderer.renderGuiItemOverlay(this.textRenderer, itemStack3, i + 5 + 35, n);
+                  }
+
+                  this.renderArrow(matrices, tradeOffer, i, n);
+                  this.itemRenderer.renderInGui(itemStack4, i + 5 + 68, n);
+                  this.itemRenderer.renderGuiItemOverlay(this.textRenderer, itemStack4, i + 5 + 68, n);
+                  this.itemRenderer.zOffset = 0.0F;
+                  k += 20;
+                  ++m;
+               }
+            }
+
+            int o = this.selectedIndex;
+            tradeOffer = (TradeOffer)tradeOfferList.get(o);
+            if (((MerchantScreenHandler)this.handler).isLeveled()) {
+               this.drawLevelInfo(matrices, i, j, tradeOffer);
+            }
+
+            if (tradeOffer.isDisabled() && this.isPointWithinBounds(186, 35, 22, 21, (double)mouseX, (double)mouseY) && ((MerchantScreenHandler)this.handler).canRefreshTrades()) {
+               this.renderTooltip(matrices, DEPRECATED_TEXT, mouseX, mouseY);
+            }
+
+            MerchantScreen.WidgetButtonPage[] var19 = this.offers;
+            int var20 = var19.length;
+
+            for(int var21 = 0; var21 < var20; ++var21) {
+               MerchantScreen.WidgetButtonPage widgetButtonPage = var19[var21];
+               if (widgetButtonPage.isHovered()) {
+                  widgetButtonPage.renderToolTip(matrices, mouseX, mouseY);
+               }
+
+               widgetButtonPage.visible = widgetButtonPage.index < ((MerchantScreenHandler)this.handler).getRecipes().size();
+            }
+
+            RenderSystem.popMatrix();
+            RenderSystem.enableDepthTest();
+            break;
+         }
+      }
+
+      this.drawMouseoverTooltip(matrices, mouseX, mouseY);
+   }
+
+   private void renderArrow(MatrixStack matrices, TradeOffer tradeOffer, int x, int y) {
+      RenderSystem.enableBlend();
+      this.client.getTextureManager().bindTexture(TEXTURE);
+      if (tradeOffer.isDisabled()) {
+         drawTexture(matrices, x + 5 + 35 + 20, y + 3, this.getZOffset(), 25.0F, 171.0F, 10, 9, 256, 512);
+      } else {
+         drawTexture(matrices, x + 5 + 35 + 20, y + 3, this.getZOffset(), 15.0F, 171.0F, 10, 9, 256, 512);
+      }
+
+   }
+
+   private void renderFirstBuyItem(MatrixStack matrices, ItemStack adjustedFirstBuyItem, ItemStack originalFirstBuyItem, int x, int y) {
+      this.itemRenderer.renderInGui(adjustedFirstBuyItem, x, y);
+      if (originalFirstBuyItem.getCount() == adjustedFirstBuyItem.getCount()) {
+         this.itemRenderer.renderGuiItemOverlay(this.textRenderer, adjustedFirstBuyItem, x, y);
+      } else {
+         this.itemRenderer.renderGuiItemOverlay(this.textRenderer, originalFirstBuyItem, x, y, originalFirstBuyItem.getCount() == 1 ? "1" : null);
+         this.itemRenderer.renderGuiItemOverlay(this.textRenderer, adjustedFirstBuyItem, x + 14, y, adjustedFirstBuyItem.getCount() == 1 ? "1" : null);
+         this.client.getTextureManager().bindTexture(TEXTURE);
+         this.setZOffset(this.getZOffset() + 300);
+         drawTexture(matrices, x + 7, y + 12, this.getZOffset(), 0.0F, 176.0F, 9, 2, 256, 512);
+         this.setZOffset(this.getZOffset() - 300);
+      }
+
+   }
+
+   private boolean canScroll(int listSize) {
+      return listSize > 7;
+   }
+
+   public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+      int i = ((MerchantScreenHandler)this.handler).getRecipes().size();
+      if (this.canScroll(i)) {
+         int j = i - 7;
+         this.indexStartOffset = (int)((double)this.indexStartOffset - amount);
+         this.indexStartOffset = MathHelper.clamp(this.indexStartOffset, 0, j);
+      }
+
+      return true;
+   }
+
+   public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+      int i = ((MerchantScreenHandler)this.handler).getRecipes().size();
+      if (this.scrolling) {
+         int j = this.y + 18;
+         int k = j + 139;
+         int l = i - 7;
+         float f = ((float)mouseY - (float)j - 13.5F) / ((float)(k - j) - 27.0F);
+         f = f * (float)l + 0.5F;
+         this.indexStartOffset = MathHelper.clamp((int)f, 0, l);
+         return true;
+      } else {
+         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+      }
+   }
+
+   public boolean mouseClicked(double mouseX, double mouseY, int button) {
+      this.scrolling = false;
+      int i = (this.width - this.backgroundWidth) / 2;
+      int j = (this.height - this.backgroundHeight) / 2;
+      if (this.canScroll(((MerchantScreenHandler)this.handler).getRecipes().size()) && mouseX > (double)(i + 94) && mouseX < (double)(i + 94 + 6) && mouseY > (double)(j + 18) && mouseY <= (double)(j + 18 + 139 + 1)) {
+         this.scrolling = true;
+      }
+
+      return super.mouseClicked(mouseX, mouseY, button);
+   }
+
+   @Environment(EnvType.CLIENT)
+   class WidgetButtonPage extends ButtonWidget {
+      final int index;
+
+      public WidgetButtonPage(int x, int y, int index, ButtonWidget.PressAction onPress) {
+         super(x, y, 89, 20, LiteralText.EMPTY, onPress);
+         this.index = index;
+         this.visible = false;
+      }
+
+      public int getIndex() {
+         return this.index;
+      }
+
+      public void renderToolTip(MatrixStack matrices, int mouseX, int mouseY) {
+         if (this.hovered && ((MerchantScreenHandler)MerchantScreen.this.handler).getRecipes().size() > this.index + MerchantScreen.this.indexStartOffset) {
+            ItemStack itemStack3;
+            if (mouseX < this.x + 20) {
+               itemStack3 = ((TradeOffer)((MerchantScreenHandler)MerchantScreen.this.handler).getRecipes().get(this.index + MerchantScreen.this.indexStartOffset)).getAdjustedFirstBuyItem();
+               MerchantScreen.this.renderTooltip(matrices, itemStack3, mouseX, mouseY);
+            } else if (mouseX < this.x + 50 && mouseX > this.x + 30) {
+               itemStack3 = ((TradeOffer)((MerchantScreenHandler)MerchantScreen.this.handler).getRecipes().get(this.index + MerchantScreen.this.indexStartOffset)).getSecondBuyItem();
+               if (!itemStack3.isEmpty()) {
+                  MerchantScreen.this.renderTooltip(matrices, itemStack3, mouseX, mouseY);
+               }
+            } else if (mouseX > this.x + 65) {
+               itemStack3 = ((TradeOffer)((MerchantScreenHandler)MerchantScreen.this.handler).getRecipes().get(this.index + MerchantScreen.this.indexStartOffset)).getMutableSellItem();
+               MerchantScreen.this.renderTooltip(matrices, itemStack3, mouseX, mouseY);
+            }
+         }
+
+      }
+   }
+}

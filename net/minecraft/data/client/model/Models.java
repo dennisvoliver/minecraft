@@ -1,0 +1,221 @@
+package net.minecraft.data.client.model;
+
+import java.util.Optional;
+import java.util.stream.IntStream;
+import net.minecraft.util.Identifier;
+
+public class Models {
+   public static final Model CUBE;
+   public static final Model CUBE_DIRECTIONAL;
+   public static final Model CUBE_ALL;
+   public static final Model CUBE_MIRRORED_ALL;
+   public static final Model CUBE_COLUMN;
+   public static final Model CUBE_COLUMN_HORIZONTAL;
+   public static final Model CUBE_TOP;
+   public static final Model CUBE_BOTTOM_TOP;
+   public static final Model ORIENTABLE;
+   public static final Model ORIENTABLE_WITH_BOTTOM;
+   public static final Model ORIENTABLE_VERTICAL;
+   public static final Model BUTTON;
+   public static final Model BUTTON_PRESSED;
+   public static final Model BUTTON_INVENTORY;
+   public static final Model DOOR_BOTTOM;
+   public static final Model DOOR_BOTTOM_RH;
+   public static final Model DOOR_TOP;
+   public static final Model DOOR_TOP_RH;
+   public static final Model FENCE_POST;
+   public static final Model FENCE_SIDE;
+   public static final Model FENCE_INVENTORY;
+   public static final Model TEMPLATE_WALL_POST;
+   public static final Model TEMPLATE_WALL_SIDE;
+   public static final Model TEMPLATE_WALL_SIDE_TALL;
+   public static final Model WALL_INVENTORY;
+   public static final Model TEMPLATE_FENCE_GATE;
+   public static final Model TEMPLATE_FENCE_GATE_OPEN;
+   public static final Model TEMPLATE_FENCE_GATE_WALL;
+   public static final Model TEMPLATE_FENCE_GATE_WALL_OPEN;
+   public static final Model PRESSURE_PLATE_UP;
+   public static final Model PRESSURE_PLATE_DOWN;
+   public static final Model PARTICLE;
+   public static final Model SLAB;
+   public static final Model SLAB_TOP;
+   public static final Model LEAVES;
+   public static final Model STAIRS;
+   public static final Model INNER_STAIRS;
+   public static final Model OUTER_STAIRS;
+   public static final Model TEMPLATE_TRAPDOOR_TOP;
+   public static final Model TEMPLATE_TRAPDOOR_BOTTOM;
+   public static final Model TEMPLATE_TRAPDOOR_OPEN;
+   public static final Model TEMPLATE_ORIENTABLE_TRAPDOOR_TOP;
+   public static final Model TEMPLATE_ORIENTABLE_TRAPDOOR_BOTTOM;
+   public static final Model TEMPLATE_ORIENTABLE_TRAPDOOR_OPEN;
+   public static final Model CROSS;
+   public static final Model TINTED_CROSS;
+   public static final Model FLOWER_POT_CROSS;
+   public static final Model TINTED_FLOWER_POT_CROSS;
+   public static final Model RAIL_FLAT;
+   public static final Model RAIL_CURVED;
+   public static final Model TEMPLATE_RAIL_RAISED_NE;
+   public static final Model TEMPLATE_RAIL_RAISED_SW;
+   public static final Model CARPET;
+   public static final Model CORAL_FAN;
+   public static final Model CORAL_WALL_FAN;
+   public static final Model TEMPLATE_GLAZED_TERRACOTTA;
+   public static final Model TEMPLATE_CHORUS_FLOWER;
+   public static final Model TEMPLATE_DAYLIGHT_DETECTOR;
+   public static final Model TEMPLATE_GLASS_PANE_NOSIDE;
+   public static final Model TEMPLATE_GLASS_PANE_NOSIDE_ALT;
+   public static final Model TEMPLATE_GLASS_PANE_POST;
+   public static final Model TEMPLATE_GLASS_PANE_SIDE;
+   public static final Model TEMPLATE_GLASS_PANE_SIDE_ALT;
+   public static final Model TEMPLATE_COMMAND_BLOCK;
+   public static final Model TEMPLATE_ANVIL;
+   public static final Model[] STEM_GROWTH_STAGES;
+   public static final Model STEM_FRUIT;
+   public static final Model CROP;
+   public static final Model TEMPLATE_FARMLAND;
+   public static final Model TEMPLATE_FIRE_FLOOR;
+   public static final Model TEMPLATE_FIRE_SIDE;
+   public static final Model TEMPLATE_FIRE_SIDE_ALT;
+   public static final Model TEMPLATE_FIRE_UP;
+   public static final Model TEMPLATE_FIRE_UP_ALT;
+   public static final Model TEMPLATE_CAMPFIRE;
+   public static final Model TEMPLATE_LANTERN;
+   public static final Model TEMPLATE_HANGING_LANTERN;
+   public static final Model TEMPLATE_TORCH;
+   public static final Model TEMPLATE_TORCH_WALL;
+   public static final Model TEMPLATE_PISTON;
+   public static final Model TEMPLATE_PISTON_HEAD;
+   public static final Model TEMPLATE_PISTON_HEAD_SHORT;
+   public static final Model TEMPLATE_SEAGRASS;
+   public static final Model TEMPLATE_TURTLE_EGG;
+   public static final Model TEMPLATE_TWO_TURTLE_EGGS;
+   public static final Model TEMPLATE_THREE_TURTLE_EGGS;
+   public static final Model TEMPLATE_FOUR_TURTLE_EGGS;
+   public static final Model TEMPLATE_SINGLE_FACE;
+   public static final Model GENERATED;
+   public static final Model HANDHELD;
+   public static final Model HANDHELD_ROD;
+   public static final Model TEMPLATE_SHULKER_BOX;
+   public static final Model TEMPLATE_BED;
+   public static final Model TEMPLATE_BANNER;
+   public static final Model TEMPLATE_SKULL;
+
+   private static Model make(TextureKey... requiredTextures) {
+      return new Model(Optional.empty(), Optional.empty(), requiredTextures);
+   }
+
+   private static Model block(String parent, TextureKey... requiredTextures) {
+      return new Model(Optional.of(new Identifier("minecraft", "block/" + parent)), Optional.empty(), requiredTextures);
+   }
+
+   private static Model item(String parent, TextureKey... requiredTextures) {
+      return new Model(Optional.of(new Identifier("minecraft", "item/" + parent)), Optional.empty(), requiredTextures);
+   }
+
+   private static Model block(String parent, String variant, TextureKey... requiredTextures) {
+      return new Model(Optional.of(new Identifier("minecraft", "block/" + parent)), Optional.of(variant), requiredTextures);
+   }
+
+   static {
+      CUBE = block("cube", TextureKey.PARTICLE, TextureKey.NORTH, TextureKey.SOUTH, TextureKey.EAST, TextureKey.WEST, TextureKey.UP, TextureKey.DOWN);
+      CUBE_DIRECTIONAL = block("cube_directional", TextureKey.PARTICLE, TextureKey.NORTH, TextureKey.SOUTH, TextureKey.EAST, TextureKey.WEST, TextureKey.UP, TextureKey.DOWN);
+      CUBE_ALL = block("cube_all", TextureKey.ALL);
+      CUBE_MIRRORED_ALL = block("cube_mirrored_all", "_mirrored", TextureKey.ALL);
+      CUBE_COLUMN = block("cube_column", TextureKey.END, TextureKey.SIDE);
+      CUBE_COLUMN_HORIZONTAL = block("cube_column_horizontal", "_horizontal", TextureKey.END, TextureKey.SIDE);
+      CUBE_TOP = block("cube_top", TextureKey.TOP, TextureKey.SIDE);
+      CUBE_BOTTOM_TOP = block("cube_bottom_top", TextureKey.TOP, TextureKey.BOTTOM, TextureKey.SIDE);
+      ORIENTABLE = block("orientable", TextureKey.TOP, TextureKey.FRONT, TextureKey.SIDE);
+      ORIENTABLE_WITH_BOTTOM = block("orientable_with_bottom", TextureKey.TOP, TextureKey.BOTTOM, TextureKey.SIDE, TextureKey.FRONT);
+      ORIENTABLE_VERTICAL = block("orientable_vertical", "_vertical", TextureKey.FRONT, TextureKey.SIDE);
+      BUTTON = block("button", TextureKey.TEXTURE);
+      BUTTON_PRESSED = block("button_pressed", "_pressed", TextureKey.TEXTURE);
+      BUTTON_INVENTORY = block("button_inventory", "_inventory", TextureKey.TEXTURE);
+      DOOR_BOTTOM = block("door_bottom", "_bottom", TextureKey.TOP, TextureKey.BOTTOM);
+      DOOR_BOTTOM_RH = block("door_bottom_rh", "_bottom_hinge", TextureKey.TOP, TextureKey.BOTTOM);
+      DOOR_TOP = block("door_top", "_top", TextureKey.TOP, TextureKey.BOTTOM);
+      DOOR_TOP_RH = block("door_top_rh", "_top_hinge", TextureKey.TOP, TextureKey.BOTTOM);
+      FENCE_POST = block("fence_post", "_post", TextureKey.TEXTURE);
+      FENCE_SIDE = block("fence_side", "_side", TextureKey.TEXTURE);
+      FENCE_INVENTORY = block("fence_inventory", "_inventory", TextureKey.TEXTURE);
+      TEMPLATE_WALL_POST = block("template_wall_post", "_post", TextureKey.WALL);
+      TEMPLATE_WALL_SIDE = block("template_wall_side", "_side", TextureKey.WALL);
+      TEMPLATE_WALL_SIDE_TALL = block("template_wall_side_tall", "_side_tall", TextureKey.WALL);
+      WALL_INVENTORY = block("wall_inventory", "_inventory", TextureKey.WALL);
+      TEMPLATE_FENCE_GATE = block("template_fence_gate", TextureKey.TEXTURE);
+      TEMPLATE_FENCE_GATE_OPEN = block("template_fence_gate_open", "_open", TextureKey.TEXTURE);
+      TEMPLATE_FENCE_GATE_WALL = block("template_fence_gate_wall", "_wall", TextureKey.TEXTURE);
+      TEMPLATE_FENCE_GATE_WALL_OPEN = block("template_fence_gate_wall_open", "_wall_open", TextureKey.TEXTURE);
+      PRESSURE_PLATE_UP = block("pressure_plate_up", TextureKey.TEXTURE);
+      PRESSURE_PLATE_DOWN = block("pressure_plate_down", "_down", TextureKey.TEXTURE);
+      PARTICLE = make(TextureKey.PARTICLE);
+      SLAB = block("slab", TextureKey.BOTTOM, TextureKey.TOP, TextureKey.SIDE);
+      SLAB_TOP = block("slab_top", "_top", TextureKey.BOTTOM, TextureKey.TOP, TextureKey.SIDE);
+      LEAVES = block("leaves", TextureKey.ALL);
+      STAIRS = block("stairs", TextureKey.BOTTOM, TextureKey.TOP, TextureKey.SIDE);
+      INNER_STAIRS = block("inner_stairs", "_inner", TextureKey.BOTTOM, TextureKey.TOP, TextureKey.SIDE);
+      OUTER_STAIRS = block("outer_stairs", "_outer", TextureKey.BOTTOM, TextureKey.TOP, TextureKey.SIDE);
+      TEMPLATE_TRAPDOOR_TOP = block("template_trapdoor_top", "_top", TextureKey.TEXTURE);
+      TEMPLATE_TRAPDOOR_BOTTOM = block("template_trapdoor_bottom", "_bottom", TextureKey.TEXTURE);
+      TEMPLATE_TRAPDOOR_OPEN = block("template_trapdoor_open", "_open", TextureKey.TEXTURE);
+      TEMPLATE_ORIENTABLE_TRAPDOOR_TOP = block("template_orientable_trapdoor_top", "_top", TextureKey.TEXTURE);
+      TEMPLATE_ORIENTABLE_TRAPDOOR_BOTTOM = block("template_orientable_trapdoor_bottom", "_bottom", TextureKey.TEXTURE);
+      TEMPLATE_ORIENTABLE_TRAPDOOR_OPEN = block("template_orientable_trapdoor_open", "_open", TextureKey.TEXTURE);
+      CROSS = block("cross", TextureKey.CROSS);
+      TINTED_CROSS = block("tinted_cross", TextureKey.CROSS);
+      FLOWER_POT_CROSS = block("flower_pot_cross", TextureKey.PLANT);
+      TINTED_FLOWER_POT_CROSS = block("tinted_flower_pot_cross", TextureKey.PLANT);
+      RAIL_FLAT = block("rail_flat", TextureKey.RAIL);
+      RAIL_CURVED = block("rail_curved", "_corner", TextureKey.RAIL);
+      TEMPLATE_RAIL_RAISED_NE = block("template_rail_raised_ne", "_raised_ne", TextureKey.RAIL);
+      TEMPLATE_RAIL_RAISED_SW = block("template_rail_raised_sw", "_raised_sw", TextureKey.RAIL);
+      CARPET = block("carpet", TextureKey.WOOL);
+      CORAL_FAN = block("coral_fan", TextureKey.FAN);
+      CORAL_WALL_FAN = block("coral_wall_fan", TextureKey.FAN);
+      TEMPLATE_GLAZED_TERRACOTTA = block("template_glazed_terracotta", TextureKey.PATTERN);
+      TEMPLATE_CHORUS_FLOWER = block("template_chorus_flower", TextureKey.TEXTURE);
+      TEMPLATE_DAYLIGHT_DETECTOR = block("template_daylight_detector", TextureKey.TOP, TextureKey.SIDE);
+      TEMPLATE_GLASS_PANE_NOSIDE = block("template_glass_pane_noside", "_noside", TextureKey.PANE);
+      TEMPLATE_GLASS_PANE_NOSIDE_ALT = block("template_glass_pane_noside_alt", "_noside_alt", TextureKey.PANE);
+      TEMPLATE_GLASS_PANE_POST = block("template_glass_pane_post", "_post", TextureKey.PANE, TextureKey.EDGE);
+      TEMPLATE_GLASS_PANE_SIDE = block("template_glass_pane_side", "_side", TextureKey.PANE, TextureKey.EDGE);
+      TEMPLATE_GLASS_PANE_SIDE_ALT = block("template_glass_pane_side_alt", "_side_alt", TextureKey.PANE, TextureKey.EDGE);
+      TEMPLATE_COMMAND_BLOCK = block("template_command_block", TextureKey.FRONT, TextureKey.BACK, TextureKey.SIDE);
+      TEMPLATE_ANVIL = block("template_anvil", TextureKey.TOP);
+      STEM_GROWTH_STAGES = (Model[])IntStream.range(0, 8).mapToObj((i) -> {
+         return block("stem_growth" + i, "_stage" + i, TextureKey.STEM);
+      }).toArray((i) -> {
+         return new Model[i];
+      });
+      STEM_FRUIT = block("stem_fruit", TextureKey.STEM, TextureKey.UPPERSTEM);
+      CROP = block("crop", TextureKey.CROP);
+      TEMPLATE_FARMLAND = block("template_farmland", TextureKey.DIRT, TextureKey.TOP);
+      TEMPLATE_FIRE_FLOOR = block("template_fire_floor", TextureKey.FIRE);
+      TEMPLATE_FIRE_SIDE = block("template_fire_side", TextureKey.FIRE);
+      TEMPLATE_FIRE_SIDE_ALT = block("template_fire_side_alt", TextureKey.FIRE);
+      TEMPLATE_FIRE_UP = block("template_fire_up", TextureKey.FIRE);
+      TEMPLATE_FIRE_UP_ALT = block("template_fire_up_alt", TextureKey.FIRE);
+      TEMPLATE_CAMPFIRE = block("template_campfire", TextureKey.FIRE, TextureKey.LIT_LOG);
+      TEMPLATE_LANTERN = block("template_lantern", TextureKey.LANTERN);
+      TEMPLATE_HANGING_LANTERN = block("template_hanging_lantern", "_hanging", TextureKey.LANTERN);
+      TEMPLATE_TORCH = block("template_torch", TextureKey.TORCH);
+      TEMPLATE_TORCH_WALL = block("template_torch_wall", TextureKey.TORCH);
+      TEMPLATE_PISTON = block("template_piston", TextureKey.PLATFORM, TextureKey.BOTTOM, TextureKey.SIDE);
+      TEMPLATE_PISTON_HEAD = block("template_piston_head", TextureKey.PLATFORM, TextureKey.SIDE, TextureKey.UNSTICKY);
+      TEMPLATE_PISTON_HEAD_SHORT = block("template_piston_head_short", TextureKey.PLATFORM, TextureKey.SIDE, TextureKey.UNSTICKY);
+      TEMPLATE_SEAGRASS = block("template_seagrass", TextureKey.TEXTURE);
+      TEMPLATE_TURTLE_EGG = block("template_turtle_egg", TextureKey.ALL);
+      TEMPLATE_TWO_TURTLE_EGGS = block("template_two_turtle_eggs", TextureKey.ALL);
+      TEMPLATE_THREE_TURTLE_EGGS = block("template_three_turtle_eggs", TextureKey.ALL);
+      TEMPLATE_FOUR_TURTLE_EGGS = block("template_four_turtle_eggs", TextureKey.ALL);
+      TEMPLATE_SINGLE_FACE = block("template_single_face", TextureKey.TEXTURE);
+      GENERATED = item("generated", TextureKey.LAYER0);
+      HANDHELD = item("handheld", TextureKey.LAYER0);
+      HANDHELD_ROD = item("handheld_rod", TextureKey.LAYER0);
+      TEMPLATE_SHULKER_BOX = item("template_shulker_box", TextureKey.PARTICLE);
+      TEMPLATE_BED = item("template_bed", TextureKey.PARTICLE);
+      TEMPLATE_BANNER = item("template_banner");
+      TEMPLATE_SKULL = item("template_skull");
+   }
+}

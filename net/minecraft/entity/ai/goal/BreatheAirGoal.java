@@ -1,0 +1,69 @@
+package net.minecraft.entity.ai.goal;
+
+import java.util.EnumSet;
+import java.util.Iterator;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.MovementType;
+import net.minecraft.entity.ai.pathing.NavigationType;
+import net.minecraft.entity.mob.PathAwareEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.WorldView;
+
+public class BreatheAirGoal extends Goal {
+   private final PathAwareEntity mob;
+
+   public BreatheAirGoal(PathAwareEntity mob) {
+      this.mob = mob;
+      this.setControls(EnumSet.of(Goal.Control.MOVE, Goal.Control.LOOK));
+   }
+
+   public boolean canStart() {
+      return this.mob.getAir() < 140;
+   }
+
+   public boolean shouldContinue() {
+      return this.canStart();
+   }
+
+   public boolean canStop() {
+      return false;
+   }
+
+   public void start() {
+      this.moveToAir();
+   }
+
+   private void moveToAir() {
+      Iterable<BlockPos> iterable = BlockPos.iterate(MathHelper.floor(this.mob.getX() - 1.0D), MathHelper.floor(this.mob.getY()), MathHelper.floor(this.mob.getZ() - 1.0D), MathHelper.floor(this.mob.getX() + 1.0D), MathHelper.floor(this.mob.getY() + 8.0D), MathHelper.floor(this.mob.getZ() + 1.0D));
+      BlockPos blockPos = null;
+      Iterator var3 = iterable.iterator();
+
+      while(var3.hasNext()) {
+         BlockPos blockPos2 = (BlockPos)var3.next();
+         if (this.isAirPos(this.mob.world, blockPos2)) {
+            blockPos = blockPos2;
+            break;
+         }
+      }
+
+      if (blockPos == null) {
+         blockPos = new BlockPos(this.mob.getX(), this.mob.getY() + 8.0D, this.mob.getZ());
+      }
+
+      this.mob.getNavigation().startMovingTo((double)blockPos.getX(), (double)(blockPos.getY() + 1), (double)blockPos.getZ(), 1.0D);
+   }
+
+   public void tick() {
+      this.moveToAir();
+      this.mob.updateVelocity(0.02F, new Vec3d((double)this.mob.sidewaysSpeed, (double)this.mob.upwardSpeed, (double)this.mob.forwardSpeed));
+      this.mob.move(MovementType.SELF, this.mob.getVelocity());
+   }
+
+   private boolean isAirPos(WorldView world, BlockPos pos) {
+      BlockState blockState = world.getBlockState(pos);
+      return (world.getFluidState(pos).isEmpty() || blockState.isOf(Blocks.BUBBLE_COLUMN)) && blockState.canPathfindThrough(world, pos, NavigationType.LAND);
+   }
+}

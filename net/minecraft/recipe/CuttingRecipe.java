@@ -1,0 +1,107 @@
+package net.minecraft.recipe;
+
+import com.google.gson.JsonObject;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemConvertible;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.JsonHelper;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.registry.Registry;
+
+public abstract class CuttingRecipe implements Recipe<Inventory> {
+   protected final Ingredient input;
+   protected final ItemStack output;
+   private final RecipeType<?> type;
+   private final RecipeSerializer<?> serializer;
+   protected final Identifier id;
+   protected final String group;
+
+   public CuttingRecipe(RecipeType<?> type, RecipeSerializer<?> serializer, Identifier id, String group, Ingredient input, ItemStack output) {
+      this.type = type;
+      this.serializer = serializer;
+      this.id = id;
+      this.group = group;
+      this.input = input;
+      this.output = output;
+   }
+
+   public RecipeType<?> getType() {
+      return this.type;
+   }
+
+   public RecipeSerializer<?> getSerializer() {
+      return this.serializer;
+   }
+
+   public Identifier getId() {
+      return this.id;
+   }
+
+   @Environment(EnvType.CLIENT)
+   public String getGroup() {
+      return this.group;
+   }
+
+   public ItemStack getOutput() {
+      return this.output;
+   }
+
+   public DefaultedList<Ingredient> getPreviewInputs() {
+      DefaultedList<Ingredient> defaultedList = DefaultedList.of();
+      defaultedList.add(this.input);
+      return defaultedList;
+   }
+
+   @Environment(EnvType.CLIENT)
+   public boolean fits(int width, int height) {
+      return true;
+   }
+
+   public ItemStack craft(Inventory inv) {
+      return this.output.copy();
+   }
+
+   public static class Serializer<T extends CuttingRecipe> implements RecipeSerializer<T> {
+      final CuttingRecipe.Serializer.RecipeFactory<T> recipeFactory;
+
+      protected Serializer(CuttingRecipe.Serializer.RecipeFactory<T> recipeFactory) {
+         this.recipeFactory = recipeFactory;
+      }
+
+      public T read(Identifier identifier, JsonObject jsonObject) {
+         String string = JsonHelper.getString(jsonObject, "group", "");
+         Ingredient ingredient2;
+         if (JsonHelper.hasArray(jsonObject, "ingredient")) {
+            ingredient2 = Ingredient.fromJson(JsonHelper.getArray(jsonObject, "ingredient"));
+         } else {
+            ingredient2 = Ingredient.fromJson(JsonHelper.getObject(jsonObject, "ingredient"));
+         }
+
+         String string2 = JsonHelper.getString(jsonObject, "result");
+         int i = JsonHelper.getInt(jsonObject, "count");
+         ItemStack itemStack = new ItemStack((ItemConvertible)Registry.ITEM.get(new Identifier(string2)), i);
+         return this.recipeFactory.create(identifier, string, ingredient2, itemStack);
+      }
+
+      public T read(Identifier identifier, PacketByteBuf packetByteBuf) {
+         String string = packetByteBuf.readString(32767);
+         Ingredient ingredient = Ingredient.fromPacket(packetByteBuf);
+         ItemStack itemStack = packetByteBuf.readItemStack();
+         return this.recipeFactory.create(identifier, string, ingredient, itemStack);
+      }
+
+      public void write(PacketByteBuf packetByteBuf, T cuttingRecipe) {
+         packetByteBuf.writeString(cuttingRecipe.group);
+         cuttingRecipe.input.write(packetByteBuf);
+         packetByteBuf.writeItemStack(cuttingRecipe.output);
+      }
+
+      interface RecipeFactory<T extends CuttingRecipe> {
+         T create(Identifier identifier, String string, Ingredient ingredient, ItemStack itemStack);
+      }
+   }
+}

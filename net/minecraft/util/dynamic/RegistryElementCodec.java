@@ -1,0 +1,76 @@
+package net.minecraft.util.dynamic;
+
+import com.mojang.datafixers.util.Either;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import java.util.List;
+import java.util.function.Supplier;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
+
+/**
+ * A codec for registry elements. Will prefer to encode/decode objects as
+ * identifiers if they exist in a registry and falls back to full encoding/
+ * decoding behavior if it cannot do so.
+ * 
+ * <p>The codec's saves and loads {@code Supplier<E>} in order to avoid early
+ * loading from registry before a registry is fully loaded from a codec.</p>
+ * 
+ * @param <E> the element type
+ * @see RegistryCodec
+ * @see RegistryReadingOps
+ * @see RegistryOps
+ */
+public final class RegistryElementCodec<E> implements Codec<Supplier<E>> {
+   private final RegistryKey<? extends Registry<E>> registryRef;
+   private final Codec<E> elementCodec;
+   private final boolean field_26758;
+
+   public static <E> RegistryElementCodec<E> of(RegistryKey<? extends Registry<E>> registryRef, Codec<E> codec) {
+      return method_31192(registryRef, codec, true);
+   }
+
+   public static <E> Codec<List<Supplier<E>>> method_31194(RegistryKey<? extends Registry<E>> registryKey, Codec<E> codec) {
+      return Codec.either(method_31192(registryKey, codec, false).listOf(), codec.xmap((object) -> {
+         return () -> {
+            return object;
+         };
+      }, Supplier::get).listOf()).xmap((either) -> {
+         return (List)either.map((list) -> {
+            return list;
+         }, (list) -> {
+            return list;
+         });
+      }, Either::left);
+   }
+
+   private static <E> RegistryElementCodec<E> method_31192(RegistryKey<? extends Registry<E>> registryKey, Codec<E> codec, boolean bl) {
+      return new RegistryElementCodec(registryKey, codec, bl);
+   }
+
+   private RegistryElementCodec(RegistryKey<? extends Registry<E>> registryRef, Codec<E> codec, boolean bl) {
+      this.registryRef = registryRef;
+      this.elementCodec = codec;
+      this.field_26758 = bl;
+   }
+
+   public <T> DataResult<T> encode(Supplier<E> supplier, DynamicOps<T> dynamicOps, T object) {
+      return dynamicOps instanceof RegistryReadingOps ? ((RegistryReadingOps)dynamicOps).encodeOrId(supplier.get(), object, this.registryRef, this.elementCodec) : this.elementCodec.encode(supplier.get(), dynamicOps, object);
+   }
+
+   public <T> DataResult<Pair<Supplier<E>, T>> decode(DynamicOps<T> ops, T input) {
+      return ops instanceof RegistryOps ? ((RegistryOps)ops).decodeOrId(input, this.registryRef, this.elementCodec, this.field_26758) : this.elementCodec.decode(ops, input).map((pair) -> {
+         return pair.mapFirst((object) -> {
+            return () -> {
+               return object;
+            };
+         });
+      });
+   }
+
+   public String toString() {
+      return "RegistryFileCodec[" + this.registryRef + " " + this.elementCodec + "]";
+   }
+}
